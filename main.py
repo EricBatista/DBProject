@@ -1,47 +1,43 @@
-import psycopg2
+import PySimpleGUI as sg
+import subprocess
 
-import pandas as pds
-import PySimpleGUIQt as sg
+# Define the list of available Python programs
+programs = [
+    {'name': 'Programação Jogos'},
+    {'name': 'Num de Movimentos Por Jogo'},
+    {'name': 'Jogador Por País'},
+    {'name': 'Pesquisar Partida'}
+    # Add more programs as needed
+]
 
-from sqlalchemy import create_engine
-from sqlalchemy.engine import URL
+programsDict = {
+    'Programação Jogos': 'program1.py',
+    'Num de Movimentos Por Jogo': 'program2.py',
+    'Jogador Por País': 'program3.py',
+    'Pesquisar Partida': 'program4.py'
+}
 
-url = URL.create(
-    drivername="postgresql",
-    username="postgres",
-    host="localhost",
-    database="postgres",
-    password="admin"
-)
+# Define the layout for the GUI
+layout = [
+    [sg.Text('Select a program to run:')],
+    [sg.Listbox(values=[program['name'] for program in programs], size=(30, len(programs)), key='-PROGRAMS-')],
+    [sg.Button('Run'), sg.Button('Close')]
+]
 
-alchemyEngine = create_engine(url)
+window = sg.Window('Program Selector', layout)
 
-# Connect to PostgreSQL server
+# Event loop
+while True:
+    event, values = window.read()
+    if event == sg.WINDOW_CLOSED or event == 'Close':
+        break
+    elif event == 'Run':
+        selected_index = values['-PROGRAMS-'][0]
+        selected_program = programsDict[selected_index]
+        try:
+            subprocess.run(['python', selected_program], check=True)
+        except subprocess.CalledProcessError as e:
+            sg.popup_error(f"Error running program: {str(e)}")
 
-dbConnection = alchemyEngine.connect();
 
-# Read data from PostgreSQL database table and load into a DataFrame instance
-
-dataFrame = pds.read_sql("SELECT  j.Jornada, h.Nome AS Lugar, h.Endereco, array_agg(DISTINCT p1.Nome) AS Jogadores, array_agg(DISTINCT p2.Nome) AS Arbitros FROM JOGOS j JOIN Jogador_Participa_Jogo jpj ON jpj.ID_Jogos = j.ID_Jogos JOIN PESSOA p1 ON p1.NumAssociado = jpj.NumAssociado JOIN PARTICIPA_CAMPEONATO pc ON pc.NumAssociado = p1.NumAssociado JOIN PESSOA p2 ON p2.NumAssociado = j.NumAssociado JOIN SALAO s ON s.ID_Salao = j.ID_Salao JOIN HOTEL h ON h.ID_Hotel = s.ID_Hotel GROUP BY j.ID_Jogos, j.Jornada, s.ID_Salao, h.Nome, h.Endereco;", dbConnection);
-
-pds.set_option('display.expand_frame_repr', False);
-
-# Print the DataFrame
-
-
-dataframeValues = dataFrame.values
-
-print(dataframeValues)
-
-headings = dataFrame.head()
-
-layout = [[sg.Table(values=dataframeValues, headings=headings,
-                    auto_size_columns=True
-                    )]]
-
-window = sg.Window('Sample excel file', layout)
-event, value = window.read()
-
-# Close the database connection
-
-dbConnection.close();
+window.close()

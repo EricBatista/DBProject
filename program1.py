@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, MetaData, Table, text
 from sqlalchemy.orm import sessionmaker
-import PySimpleGUIQt as sg
+import PySimpleGUI as sg
 
 # Set up the database connection
 engine = create_engine('postgresql://postgres:admin@localhost/postgres')
